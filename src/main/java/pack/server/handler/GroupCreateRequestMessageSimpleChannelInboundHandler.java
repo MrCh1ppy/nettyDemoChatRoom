@@ -23,6 +23,7 @@ public class GroupCreateRequestMessageSimpleChannelInboundHandler extends Simple
 			for (Channel channel : session.getMembersChannel(groupName)) {
 				channel.writeAndFlush(new GroupCreateResponseMessage(true, "您已被拉入群：" + groupName));
 			}
+			System.out.println("====================================================================mems"+group.getMembers().size());
 		}
 		else {
 			ctx.writeAndFlush(new GroupCreateResponseMessage(false, "fail,already exist"));

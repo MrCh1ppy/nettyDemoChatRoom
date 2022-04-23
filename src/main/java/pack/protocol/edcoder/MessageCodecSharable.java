@@ -1,17 +1,13 @@
-package pack.protocol;
+package pack.protocol.edcoder;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.MessageToMessageCodec;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import pack.meaage.Message;
+import pack.meaage.MessageType;
+import pack.protocol.serilizer.Serializer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.List;
 
 @ChannelHandler.Sharable
@@ -20,17 +16,23 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
 
 	@Override
 	protected void encode(ChannelHandlerContext ctx, Message msg, List<Object> out) throws Exception {
-		var byteArrayOutputStream = new ByteArrayOutputStream();
-		var stream = new ObjectOutputStream(byteArrayOutputStream);
-		stream.writeObject(msg);
-		var text = byteArrayOutputStream.toByteArray();
-		var len = text.length;
 		var buf = ctx.alloc().buffer();
+		var version = 1;
+		var serializeWay = 1;
+
+		var text=switch (serializeWay){
+			case 0-> Serializer.Algorithm.JDK.serialize(msg);
+			case 1->Serializer.Algorithm.JSON.serialize(msg);
+			default -> new byte[0];
+		};
+
+		var len=text.length;
+
 		buf.writeBytes(magicNum)
 				//version
-				.writeByte(1)
+				.writeByte(version)
 				//0jdk 1json read way
-				.writeByte(0)
+				.writeByte(serializeWay)
 				//msg code
 				.writeByte(msg.getMsgCode())
 				//sequence id
@@ -47,15 +49,19 @@ public class MessageCodecSharable extends MessageToMessageCodec<ByteBuf, Message
 		in.readBytes(5);
 		in.readByte();
 		var readWay=in.readByte();
-		in.readByte();
+		var msgCode=in.readByte();
 		in.readInt();
 		var len=in.readInt();
 		var bytes = new byte[len];
 		in.readBytes(bytes,0,len);
-		if(readWay==(byte) 0){
-			var stream = new ObjectInputStream(new ByteArrayInputStream(bytes));
-			var message = (Message) stream.readObject();
-			out.add(message);
-		}
+		var object=switch (readWay){
+			case 0->Serializer.Algorithm.JDK.deserialize(Message.class,bytes);
+			case 1->{
+				var type = MessageType.values()[msgCode].getClazz();
+				yield Serializer.Algorithm.JSON.deserialize(type, bytes);
+			}
+			default -> throw new IllegalStateException("Unexpected value: " + readWay);
+		};
+		out.add(object);
 	}
 }

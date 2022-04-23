@@ -2,6 +2,7 @@ package pack.meaage;
 
 import lombok.Data;
 import lombok.ToString;
+import pack.meaage.Message;
 
 @Data
 @ToString(callSuper = true)

@@ -1,4 +1,4 @@
-package pack.protocol;
+package pack.protocol.edcoder;
 
 import io.netty.handler.codec.LengthFieldBasedFrameDecoder;
 

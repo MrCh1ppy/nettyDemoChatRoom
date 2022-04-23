@@ -20,7 +20,8 @@ public enum MessageType {
 	GROUP_CHAT_RESPONSE((byte) 11, GroupChatResponseMessage.class),
 
 	GROUP_MEMBERS_REQUEST((byte) 12, GroupMembersRequestMessage.class),
-	GROUP_MEMBERS_RESPONSE((byte) 13, GroupMembersResponseMessage.class)
+	GROUP_MEMBERS_RESPONSE((byte) 13, GroupMembersResponseMessage.class),
+	PING_MESSAGE((byte)14,PingMessage.class)
 	;
 
 
@@ -34,5 +35,9 @@ public enum MessageType {
 
 	public byte code() {
 		return code;
+	}
+
+	public Class<? extends Message> getClazz() {
+		return clazz;
 	}
 }
